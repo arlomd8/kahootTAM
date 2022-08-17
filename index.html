@@ -3,85 +3,70 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | ToyotaTamConnect</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="assets/css/reset.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <title>ToyotaTamConnect</title>
   </head>
   <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=720 height=1280></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
+    <div class="webgl-wrapper">
+      <div class="aspect"></div>
+      <div class="webgl-content">
+        <div id="unityContainer">
+          <canvas id="unity-canvas" style="background: #231F20"></canvas>
+          <div  id="LoadContainer" style="display: block; position: absolute; top: 0; right: 0; height: 100%; width: 100%;">
+            
+            <div class="logo"></div>
+            <div style="display: block; position: relative; top: 50%; left: 50%; margin-left: -100px; margin-top: -7px; height: 15px; width: 200px; border-style: solid; border: color #999; border-width: 1px; z-index: 9;">
+            
+              <div id="LoadBar" style="display: block; background-color: white; height: 15px; width: 0px; z-index: 10;"></div>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="unity-mobile-warning">
-        WebGL builds are not supported on mobile devices.
-      </div>
-      <div id="unity-footer">
-        <div id="unity-webgl-logo"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">ToyotaTamConnect</div>
-      </div>
     </div>
+
+    <script src="MyLoader.js"></script>
     <script>
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/9bc3f1f98d8a60f4a893dfd82ec5ca3c.js";
-      var config = {
-        dataUrl: buildUrl + "/41226d6056f9aa72cf6434cf857beb85.data.unityweb",
-        frameworkUrl: buildUrl + "/7a4efd76f5c4f2c2732ee947b6bb0b82.js.unityweb",
-        codeUrl: buildUrl + "/b7280e7073046cb2e351aa5546762296.wasm.unityweb",
+      var LBar = document.getElementById("LoadBar");
+      var CBar = document.getElementById("LoadContainer");
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "Build/13a13721c6dcb1294e66b7e4a9c0febc.data.unityweb",
+        frameworkUrl: "Build/03f07bb84129f4bb943ebe774f666770.js.unityweb",
+        codeUrl: "Build/847919a7b4a5e49b6757753c3d810340.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "ToyotaTamConnect",
         productVersion: "1.0",
-      };
-
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var mobileWarning = document.querySelector("#unity-mobile-warning");
-
-      // By default Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        container.className = "unity-mobile";
-        // Avoid draining fillrate performance on mobile devices,
-        // and default/override low DPI mode on mobile browsers.
-        config.devicePixelRatio = 1;
-        mobileWarning.style.display = "block";
-        setTimeout(() => {
-          mobileWarning.style.display = "none";
-        }, 5000);
-      } else {
-        canvas.style.width = "720px";
-        canvas.style.height = "1280px";
-      }
-      loadingBar.style.display = "block";
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
+      }, (progress) => {
+          LBar.style.width = 100 * progress + "%";
         }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-          fullscreenButton.onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
+          CBar.style.display = "none";
+          myGameInstance = unityInstance;
+
+          var retrievedPerson = JSON.parse(localStorage.getItem('playerData'));
+          myGameInstance.SendMessage('DataHooker', 'PlayerEmailHandler', retrievedPerson['email']);
+          myGameInstance.SendMessage('DataHooker', 'PlayerTicketHandler', retrievedPerson['ticket']);
+          myGameInstance.SendMessage('DataHooker', 'PlayerSubMasterValueHandler', retrievedPerson['sub_master_value_id']);
+      });
+    </script>
+
+    <!-- check for F key press to toggle full screen -->
+    <script>
+      var isFullscreen = false;
+
+      document.addEventListener('keydown', function(event) {
+          if (event.which === 70) {
+              if (!isFullscreen) {
+                myGameInstance.SetFullscreen(1);
+              } else {
+                myGameInstance.SetFullscreen(0);
+              }
+              isFullscreen = !isFullscreen;
+          }
+      });
     </script>
   </body>
 </html>
